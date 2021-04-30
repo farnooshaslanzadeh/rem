@@ -1,0 +1,62 @@
+version: "3.7"
+services:
+  backend:
+    build:
+        args:
+          - NODE_ENV=development
+        context: backend
+    command: npm run start-watch
+    environment:
+      - DATABASE_DB=example
+      - DATABASE_USER=root
+      - DATABASE_PASSWORD=password
+      - DATABASE_HOST=db
+      - NODE_ENV=development
+    ports:
+      - 9229:9229
+      - 9230:9230
+    volumes:
+      - ./backend/src:/code/src:ro
+      - ./backend/package.json:/code/package.json
+      - ./backend/package-lock.json:/code/package-lock.json
+      - back-notused:/opt/app/node_modules
+    depends_on:
+      - db
+    networks:
+      - public
+      - private
+  db:
+    image: mysql:8.0.19
+    command: '--default-authentication-plugin=mysql_native_password'
+    restart: always
+    volumes:
+      - db-data:/var/lib/mysql
+    environment:
+      - MYSQL_DATABASE=example
+      - MYSQL_ROOT_PASSWORD=password
+    networks:
+      - private
+  frontend:
+    build:
+      context: frontend
+      target: development
+    environment:
+       REACT_APP_BACKEND_HOST: http://backend
+             
+    ports:
+      - 3000:3000
+     
+    volumes:
+      - ./frontend/src:/code/src
+      - /code/node_modules
+    depends_on:
+      - backend
+    networks:
+      - public
+networks:
+  public:
+  private:
+
+volumes:
+  back-notused:
+  db-data:
